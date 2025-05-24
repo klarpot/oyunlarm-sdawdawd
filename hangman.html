@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Hangman Oyunu - f</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap");
+
+    :root {
+      --primary-color: #1f2f61;
+      --secondary-color: #224ca4;
+      --light-color: #a7c2da;
+      --highlight-color: #ff6f91;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--primary-color);
+      color: var(--light-color);
+      font-family: "Montserrat", sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Kalplerin stili ve animasyonu */
+    .heart {
+      position: absolute;
+      color: #ff6f91;
+      font-size: 24px;
+      opacity: 0.8;
+      animation-name: fall;
+      animation-timing-function: ease-in;
+      animation-iteration-count: infinite;
+      top: -50px; /* Kalpler ekranın üstünden 50px yukarıda başlar */
+    }
+
+    @keyframes fall {
+      0% {
+        transform: translateY(0) translateX(0);
+        opacity: 0.8;
+      }
+      50% {
+        transform: translateY(60vh) translateX(15px);
+        opacity: 0.5;
+      }
+      100% {
+        transform: translateY(110vh) translateX(0);
+        opacity: 0;
+      }
+    }
+
+    h1 {
+      margin: 20px 0 40px;
+      letter-spacing: 0.2rem;
+      font-weight: 700;
+      font-size: 3rem;
+      color: var(--highlight-color);
+      text-shadow: 0 0 10px #ff6f91;
+    }
+
+    .game-container {
+      padding: 20px 30px;
+      position: relative;
+      margin: 20px auto;
+      height: 350px;
+      width: 450px;
+      background: rgba(255 255 255 / 0.1);
+      border-radius: 12px;
+      box-shadow: 0 0 20px #ff6f91aa;
+    }
+
+    svg.figure-container {
+      fill: transparent;
+      stroke: var(--highlight-color);
+      stroke-width: 4px;
+      stroke-linecap: round;
+    }
+
+    .figure-part {
+      display: none;
+    }
+
+    .wrong-letters-container {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      text-align: right;
+    }
+
+    .wrong-letters-container p {
+      margin: 0 0 5px;
+      color: var(--highlight-color);
+      font-weight: 700;
+    }
+
+    .wrong-letters-container span {
+      font-size: 24px;
+      margin-left: 5px;
+      user-select: none;
+    }
+
+    .word {
+      display: flex;
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      user-select: none;
+    }
+
+    .letter {
+      border-bottom: 3px solid var(--highlight-color);
+      display: inline-flex;
+      font-size: 36px;
+      align-items: center;
+      justify-content: center;
+      margin: 0 6px;
+      height: 60px;
+      width: 30px;
+      color: var(--light-color);
+      font-weight: 600;
+      letter-spacing: 0.1rem;
+    }
+
+    .popup-container {
+      background-color: rgba(0, 0, 0, 0.3);
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+
+    .popup {
+      background-color: var(--secondary-color);
+      border-radius: 10px;
+      box-shadow: 0 15px 20px rgba(255, 111, 145, 0.7);
+      padding: 30px 40px;
+      text-align: center;
+      color: white;
+      font-size: 1.6rem;
+      font-weight: 700;
+    }
+
+    .popup h3 {
+      font-weight: 400;
+      margin-top: 10px;
+      font-size: 1.3rem;
+      color: var(--light-color);
+    }
+
+    .popup button {
+      cursor: pointer;
+      background-color: var(--highlight-color);
+      color: white;
+      border: 0;
+      margin-top: 25px;
+      padding: 15px 30px;
+      font-size: 18px;
+      font-family: inherit;
+      border-radius: 12px;
+      transition: background-color 0.3s ease;
+      font-weight: 700;
+    }
+
+    .popup button:hover {
+      background-color: #ff497a;
+    }
+
+    .popup button:active {
+      transform: scale(0.98);
+    }
+
+    .popup button:focus {
+      outline: none;
+    }
+
+    .notification-container {
+      background-color: rgba(0, 0, 0, 0.3);
+      border-radius: 10px 10px 0 0;
+      padding: 15px 20px;
+      position: absolute;
+      bottom: -60px;
+      transition: transform 0.3s ease-in-out;
+      color: var(--highlight-color);
+      font-weight: 700;
+      user-select: none;
+      z-index: 5;
+    }
+
+    .notification-container.show {
+      transform: translateY(-60px);
+    }
+  </style>
+</head>
+<body>
+  <h1>fuati oldurme he :</h1>
+
+  <div class="game-container">
+    <svg height="250" width="200" class="figure-container" >
+      <!-- Gallows -->
+      <line x1="60" y1="20" x2="140" y2="20" />
+      <line x1="140" y1="20" x2="140" y2="50" />
+      <line x1="60" y1="20" x2="60" y2="230" />
+      <line x1="20" y1="230" x2="100" y2="230" />
+      <!-- Hangman parts -->
+      <circle cx="140" cy="70" r="20" class="figure-part" />
+      <line x1="140" y1="90" x2="140" y2="150" class="figure-part" />
+      <line x1="140" y1="120" x2="120" y2="100" class="figure-part" />
+      <line x1="140" y1="120" x2="160" y2="100" class="figure-part" />
+      <line x1="140" y1="150" x2="120" y2="180" class="figure-part" />
+      <line x1="140" y1="150" x2="160" y2="180" class="figure-part" />
+    </svg>
+
+    <div class="wrong-letters-container">
+      <p>Yanlış harfler:</p>
+      <div id="wrong-letters"></div>
+    </div>
+
+    <div class="word" id="word"></div>
+  </div>
+
+  <!-- Popup -->
+  <div class="popup-container" id="popup-container">
+    <div class="popup">
+      <h2 id="final-message"></h2>
+      <h3 id="final-message-reveal-word"></h3>
+      <button id="play-button">Tekrar Oyna</button>
+    </div>
+  </div>
+
+  <!-- Notification -->
+  <div class="notification-container" id="notification-container">
+    <p>Bu harfi zaten girdiniz!</p>
+  </div>
+
+  <script>
+    const wordElement = document.getElementById("word");
+    const wrongLettersElement = document.getElementById("wrong-letters");
+    const playAgainButton = document.getElementById("play-button");
+    const popup = document.getElementById("popup-container");
+    const notification = document.getElementById("notification-container");
+    const finalMessage = document.getElementById("final-message");
+    const finalMessageRevealWord = document.getElementById("final-message-reveal-word");
+    const figureParts = document.querySelectorAll(".figure-part");
+
+    const selectedWord = "melek"; // Kelime sabit
+
+    let playable = true;
+    const correctLetters = [];
+    const wrongLetters = [];
+
+    function displayWord() {
+      wordElement.innerHTML = `
+        ${selectedWord
+          .split("")
+          .map(
+            (letter) => `
+            <span class="letter">
+              ${correctLetters.includes(letter) ? letter : ""}
+            </span>
+          `
+          )
+          .join("")}
+      `;
+
+      const innerWord = wordElement.innerText.replace(/\n/g, "");
+      if (innerWord === selectedWord) {
+        finalMessage.innerText = "afferin lan";
+        finalMessageRevealWord.innerText = "";
+        popup.style.display = "flex";
+        playable = false;
+
+        redirectToEndPage();
+      }
+    }
+
+    function updateWrongLettersElement() {
+      wrongLettersElement.innerHTML = `
+        ${wrongLetters.length > 0 ? "<p>Yanlış</p>" : ""}
+        ${wrongLetters.map((letter) => `<span>${letter}</span>`).join("")}
+      `;
+
+      figureParts.forEach((part, index) => {
+        const errors = wrongLetters.length;
+        if (index < errors) {
+          part.style.display = "block";
+        } else {
+          part.style.display = "none";
+        }
+      });
+
+      if (wrongLetters.length === figureParts.length) {
+        finalMessage.innerText = "kaybettin yazık";
+        finalMessageRevealWord.innerText = `bay carpter`;
+        popup.style.display = "flex";
+        playable = false;
+
+        redirectToEndPage();
+      }
+    }
+
+    function showNotification() {
+      notification.classList.add("show");
+      setTimeout(() => {
+        notification.classList.remove("show");
+      }, 2000);
+    }
+
+    function redirectToEndPage() {
+      setTimeout(() => {
+        window.location.href = "end.html";
+      }, 3000);
+    }
+
+    window.addEventListener("keypress", (e) => {
+      if (playable) {
+        const letter = e.key.toLowerCase();
+        if (letter >= "a" && letter <= "z") {
+          if (selectedWord.includes(letter)) {
+            if (!correctLetters.includes(letter)) {
+              correctLetters.push(letter);
+              displayWord();
+            } else {
+              showNotification();
+            }
+          } else {
+            if (!wrongLetters.includes(letter)) {
+              wrongLetters.push(letter);
+              updateWrongLettersElement();
+            } else {
+              showNotification();
+            }
+          }
+        }
+      }
+    });
+
+    playAgainButton.addEventListener("click", () => {
+      // Tekrar oyna tuşuna basınca hemen end.html sayfasına yönlendir
+      window.location.href = "end.html";
+    });
+
+    // Oyunu başlat
+    displayWord();
+  </script>
+</body>
+</html>
