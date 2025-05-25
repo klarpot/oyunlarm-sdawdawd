@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=DotGothic16&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap");
 
 :root {
   --primary-color: #1f2f61;
@@ -14,7 +14,7 @@
 body {
   background-color: var(--primary-color);
   color: var(--light-color);
-  font-family: "DotGothic16", sans-serif;
+  font-family: 'Orbitron', sans-serif;
   display: flex;
   flex-direction: column;
   align-items: center;
